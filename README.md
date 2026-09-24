@@ -1,155 +1,128 @@
 # RCS API
 
-API RESTful para envio e rastreamento de mensagens RCS (Rich Communication Services).
+> REST API for sending, tracking and querying RCS (Rich Communication Services) messaging events.
 
-## Tecnologias Utilizadas
+**Python · FastAPI · PostgreSQL · SQLAlchemy · Alembic · JWT · Docker**
 
-- **FastAPI**: Framework web moderno e de alto desempenho para construção de APIs com Python
-- **PostgreSQL**: Banco de dados relacional robusto
-- **SQLAlchemy**: ORM (Object Relational Mapper) para interação com o banco de dados
-- **Alembic**: Ferramenta para migrações de banco de dados
-- **Pydantic**: Validação de dados e serialização
-- **JWT**: Autenticação baseada em tokens
-- **Docker**: Containerização da aplicação
+| | |
+|---|---|
+| **Type** | Messaging API / Integration service |
+| **Focus** | RCS delivery, event tracking and API security |
+| **Architecture** | REST API + persistence + external RCS provider |
+| **Status** | Public technical project |
 
-## Estrutura do Projeto
+## Overview
 
+RCS API provides a backend boundary for applications that need to send RCS messages and track their lifecycle without coupling client systems directly to a messaging provider.
+
+The project demonstrates a conventional production-oriented Python API stack with authentication, persistence, migrations, validation and containerized execution.
+
+## Architecture
+
+```text
+Client Application
+       │
+       ▼
+   FastAPI API
+       │
+  Auth / Validation
+       │
+   ┌───┴──────────┐
+   │              │
+PostgreSQL     RCS Provider
+   │              │
+   └── Events / Status
 ```
+
+## Capabilities
+
+- Send RCS messages from templates.
+- Query message events with filtering and pagination.
+- Retrieve events by callback/message identifier.
+- JWT and API-key authentication.
+- PostgreSQL persistence through SQLAlchemy.
+- Schema validation with Pydantic.
+- Database migrations with Alembic.
+- Docker-based local environment.
+- Interactive OpenAPI documentation through Swagger UI and ReDoc.
+
+## API surface
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/v1/rcs/send/` | Send an RCS message |
+| `GET` | `/v1/rcs/events/` | Query messaging events |
+| `GET` | `/v1/rcs/events/{callback_message_id}` | Retrieve a specific event |
+
+Additional API details are available through `/docs` and `/redoc` when the application is running.
+
+## Quick start
+
+### Docker
+
+```bash
+git clone https://github.com/jdrpires/RCSEugen.git
+cd RCSEugen
+./start.sh
+```
+
+The API documentation is then available at:
+
+```text
+http://localhost:8000/docs
+```
+
+Stop the environment with:
+
+```bash
+./stop.sh
+```
+
+### Local Python environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+createdb rcs_db
+alembic upgrade head
+python init_db.py
+python run.py
+```
+
+## Project structure
+
+```text
 RCSEugen/
-├── alembic/                  # Configurações e scripts de migração
+├── alembic/          # Database migrations
 ├── app/
-│   ├── routers/              # Rotas da API
-│   │   ├── __init__.py
-│   │   └── rcs.py            # Endpoints RCS
-│   ├── __init__.py
-│   ├── auth.py               # Autenticação e autorização
-│   ├── database.py           # Configuração do banco de dados
-│   ├── main.py               # Aplicação principal
-│   ├── models.py             # Modelos SQLAlchemy
-│   └── schemas.py            # Esquemas Pydantic
-├── .env                      # Variáveis de ambiente
-├── alembic.ini               # Configuração do Alembic
-├── Dockerfile                # Configuração do Docker
-├── docker-compose.yml        # Configuração do Docker Compose
-├── init_db.py                # Script para inicialização do banco de dados
-├── README.md                 # Documentação do projeto
-├── requirements.txt          # Dependências do projeto
-├── run.py                    # Script para iniciar a aplicação
-├── start.sh                  # Script para iniciar os serviços Docker
-└── stop.sh                   # Script para parar os serviços Docker
+│   ├── routers/      # API routes
+│   ├── auth.py       # Authentication / authorization
+│   ├── database.py   # Persistence configuration
+│   ├── main.py       # FastAPI application
+│   ├── models.py     # SQLAlchemy models
+│   └── schemas.py    # Pydantic schemas
+├── Dockerfile
+├── docker-compose.yml
+├── init_db.py
+├── requirements.txt
+├── run.py
+├── start.sh
+└── stop.sh
 ```
 
-## Instalação e Configuração
+## Security notes
 
-### Usando Docker (Recomendado)
+- Keep credentials and API keys in environment variables.
+- Do not commit real provider tokens or production secrets.
+- Example/test credentials should never be reused in production.
+- Review CORS, token lifetime and database permissions before production deployment.
 
-1. Clone o repositório:
-   ```
-   git clone <url-do-repositorio>
-   cd RCSEugen
-   ```
+## Why this project is public
 
-2. Inicie os serviços com Docker:
-   ```
-   ./start.sh
-   ```
+This repository is part of my public engineering portfolio and demonstrates API design, integration boundaries, persistence, authentication and containerized Python services.
 
-3. Acesse a documentação da API:
-   ```
-   http://localhost:8000/docs
-   ```
+---
 
-4. Para parar os serviços:
-   ```
-   ./stop.sh
-   ```
-
-### Instalação Manual
-
-1. Clone o repositório:
-   ```
-   git clone <url-do-repositorio>
-   cd RCSEugen
-   ```
-
-2. Crie e ative um ambiente virtual:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # No Windows: venv\Scripts\activate
-   ```
-
-3. Instale as dependências:
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. Configure o banco de dados PostgreSQL:
-   ```
-   # Crie um banco de dados chamado rcs_db
-   createdb rcs_db
-   ```
-
-5. Configure as variáveis de ambiente no arquivo `.env`
-
-6. Execute as migrações:
-   ```
-   alembic upgrade head
-   ```
-
-7. Inicialize o banco de dados com dados de exemplo:
-   ```
-   python init_db.py
-   ```
-
-8. Inicie a aplicação:
-   ```
-   python run.py
-   ```
-
-9. Acesse a documentação da API:
-   ```
-   http://localhost:8000/docs
-   ```
-
-## Endpoints da API
-
-### Envio de RCS
-
-- **URL**: `/v1/rcs/send/`
-- **Método**: `POST`
-- **Descrição**: Envia mensagens RCS usando um template específico
-
-### Consulta de Eventos
-
-- **URL**: `/v1/rcs/events/`
-- **Método**: `GET`
-- **Descrição**: Consulta eventos de mensagens RCS com opções de filtragem e paginação
-
-### Consulta de Eventos por ID
-
-- **URL**: `/v1/rcs/events/{callback_message_id}`
-- **Método**: `GET`
-- **Descrição**: Consulta eventos de uma mensagem RCS específica pelo ID de callback
-
-## Autenticação
-
-A API suporta dois métodos de autenticação:
-
-1. **Token JWT**: Usando o esquema Bearer
-2. **API Key**: Usando o esquema ApiKey
-
-Ambos devem ser enviados no cabeçalho `Authorization` das requisições.
-
-## Documentação da API
-
-A documentação completa da API está disponível em:
-
-- **Swagger UI**: `/docs`
-- **ReDoc**: `/redoc`
-
-## Dados de Exemplo
-
-Ao inicializar o banco de dados, é criada uma conta de teste com uma API key gerada automaticamente. Esta API key é exibida no console durante a inicialização. Também são criados dois templates de exemplo:
-
-1. **welcome_template**: Template de boas-vindas
-2. **promo_template**: Template para promoções
+**Jean Pires** · [GitHub](https://github.com/jdrpires) · [Portfolio](https://github.com/jdrpires/jdrpires)
